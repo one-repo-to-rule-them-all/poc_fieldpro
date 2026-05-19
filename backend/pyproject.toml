@@ -1,0 +1,57 @@
+# Ruff config lives in the root .ruff.toml — do not duplicate here.
+# When `cd backend && ruff check app` runs, ruff walks up and finds .ruff.toml at repo root.
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+ignore_missing_imports = true
+# Most of the codebase predates the strict-typing rules; enforcing them all
+# at once would block CI on every untyped legacy function. The high-signal
+# checks (unused ignores, incompatible assignments, prop-decorator stack)
+# stay on. Re-enable disallow_untyped_defs in a follow-up once we've added
+# annotations to the legacy services / routes.
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+warn_unused_ignores = true
+warn_return_any = false
+no_implicit_optional = true
+plugins = ["pydantic.mypy"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+# All fixtures run in the per-test event loop (the pytest-asyncio default).
+# We make `engine` function-scoped in conftest.py so the connection pool is
+# created in the same loop the test uses — avoiding the cross-loop asyncpg
+# InterfaceError ("another operation is in progress") that bites
+# session-scoped async engines.
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = [
+    "-v",
+    "--tb=short",
+    "--strict-markers",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m not slow')",
+    "integration: marks tests as integration tests",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/migrations/*",
+    "tests/*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "@abstract",
+]

@@ -1,0 +1,72 @@
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--strict-markers -v --tb=short"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks integration tests that require external services",
+    "unit: marks pure unit tests",
+]
+filterwarnings = [
+    "error",
+    "ignore::DeprecationWarning:sqlalchemy",
+    "ignore::DeprecationWarning:asyncpg",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = false
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+no_implicit_optional = true
+check_untyped_defs = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = false
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "migrations.*"
+ignore_errors = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "tests/*",
+    "migrations/*",
+    "scripts/*",
+    "app/main.py",
+    "*/__init__.py",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+fail_under = 80
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"

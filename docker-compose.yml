@@ -1,0 +1,206 @@
+# ============================================================
+# FieldPro — Base Docker Compose
+# Development: docker compose up  (override.yml merges automatically)
+# Production:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+# ============================================================
+
+networks:
+  fieldpro:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+services:
+
+  # ----------------------------------------------------------
+  # PostgreSQL 16
+  # ----------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: fieldpro_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fieldpro}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fieldpro_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-fieldpro}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations/init:/docker-entrypoint-initdb.d:ro  # optional init scripts
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - fieldpro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fieldpro} -d ${POSTGRES_DB:-fieldpro}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ----------------------------------------------------------
+  # Redis 7
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: fieldpro_redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD:-redis_secret}
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - fieldpro
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ----------------------------------------------------------
+  # FastAPI Backend
+  # In development, docker-compose.override.yml replaces the
+  # command with --reload and mounts the source tree.
+  # ----------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: fieldpro_backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # These override .env to ensure service-name DNS is used inside Docker
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fieldpro}:${POSTGRES_PASSWORD:-fieldpro_secret}@postgres:5432/${POSTGRES_DB:-fieldpro}
+      DATABASE_SYNC_URL: postgresql://${POSTGRES_USER:-fieldpro}:${POSTGRES_PASSWORD:-fieldpro_secret}@postgres:5432/${POSTGRES_DB:-fieldpro}
+      DATABASE_TEST_URL: postgresql+asyncpg://${POSTGRES_USER:-fieldpro}:${POSTGRES_PASSWORD:-fieldpro_secret}@postgres:5432/${POSTGRES_DB:-fieldpro}_test
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - fieldpro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    # Production command — override.yml replaces this for hot-reload
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+  # ----------------------------------------------------------
+  # ARQ Background Worker
+  # Handles: recurrence expansion, email/SMS dispatch,
+  # PDF generation, KPI snapshot updates, invoice auto-send
+  # ----------------------------------------------------------
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: fieldpro_worker
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-fieldpro}:${POSTGRES_PASSWORD:-fieldpro_secret}@postgres:5432/${POSTGRES_DB:-fieldpro}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_secret}@redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    networks:
+      - fieldpro
+    command: python -m app.workers.main
+    # Workers do not expose ports — they consume from Redis queue only
+
+  # ----------------------------------------------------------
+  # Next.js Frontend
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    container_name: fieldpro_frontend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - fieldpro
+
+  # ----------------------------------------------------------
+  # Nginx (reverse proxy + TLS termination)
+  # Proxies /api/* → backend:8000, /* → frontend:3000
+  # TLS certs: mount ./nginx/certs/ or use Certbot volumes
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: fieldpro_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - fieldpro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ----------------------------------------------------------
+  # pgAdmin 4 (dev convenience — excluded in prod via profile)
+  # ----------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: fieldpro_pgadmin
+    restart: unless-stopped
+    profiles:
+      - tools          # only starts with: docker compose --profile tools up
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@fieldpro.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-pgadmin_secret}
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - fieldpro

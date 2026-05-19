@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-inter: "Inter", sans-serif;
+  }
+
+  * {
+    @apply border-neutral-200;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-900;
+  }
+
+  h1 {
+    @apply text-2xl font-bold tracking-tight text-neutral-900;
+  }
+
+  h2 {
+    @apply text-xl font-semibold tracking-tight text-neutral-800;
+  }
+
+  h3 {
+    @apply text-base font-semibold text-neutral-800;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 shadow-sm transition-all hover:bg-neutral-50 hover:border-neutral-300 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-danger-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-danger-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-danger-600 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  .card {
+    @apply rounded-xl border border-neutral-200 bg-white shadow-sm;
+  }
+
+  .input-field {
+    @apply block w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 shadow-sm transition-colors focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-100 disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-500;
+  }
+
+  .label {
+    @apply mb-1 block text-sm font-medium text-neutral-700;
+  }
+
+  .error-message {
+    @apply mt-1 text-xs text-danger-600;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+
+  /* Light scrollbar for white backgrounds */
+  .scrollbar-light {
+    scrollbar-width: thin;
+    scrollbar-color: theme("colors.neutral.200") transparent;
+  }
+
+  .scrollbar-light::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-light::-webkit-scrollbar-thumb {
+    background-color: theme("colors.neutral.200");
+    border-radius: 4px;
+  }
+}

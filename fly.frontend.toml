@@ -1,0 +1,41 @@
+# FieldPro Frontend — Production
+app = "fieldpro-frontend"
+primary_region = "dfw"
+
+[build]
+  image = "ghcr.io/YOUR_GITHUB_ORG/fieldpro/frontend:latest"
+
+[env]
+  PORT = "3000"
+  NODE_ENV = "production"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NEXT_PUBLIC_API_URL = "https://api.fieldpro.app"
+  NEXT_PUBLIC_APP_NAME = "FieldPro"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    hard_limit = 100
+    soft_limit = 80
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1
+
+[checks]
+  [checks.health]
+    grace_period = "20s"
+    interval = "15s"
+    method = "get"
+    path = "/"
+    port = 3000
+    timeout = "10s"
+    type = "http"

@@ -1,0 +1,62 @@
+version: 2
+updates:
+  # Backend Python dependencies
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    groups:
+      fastapi-ecosystem:
+        patterns:
+          - "fastapi"
+          - "uvicorn"
+          - "pydantic*"
+          - "sqlalchemy"
+          - "alembic"
+    labels:
+      - "dependencies"
+      - "backend"
+    ignore:
+      # Major version bumps require manual review
+      - dependency-name: "sqlalchemy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "fastapi"
+        update-types: ["version-update:semver-major"]
+
+  # Frontend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    groups:
+      next-ecosystem:
+        patterns:
+          - "next"
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      tanstack:
+        patterns:
+          - "@tanstack/*"
+    labels:
+      - "dependencies"
+      - "frontend"
+    ignore:
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"

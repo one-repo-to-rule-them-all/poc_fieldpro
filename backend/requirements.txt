@@ -1,0 +1,49 @@
+# ============================================================
+# FieldPro Backend — Python Dependencies (pinned)
+# ============================================================
+
+# --- Core Framework ---
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# --- Database ---
+sqlalchemy==2.0.35
+alembic==1.13.3
+asyncpg==0.31.0
+
+# --- Pydantic / Settings ---
+pydantic==2.9.2
+pydantic[email]==2.9.2
+pydantic-settings==2.5.2
+email-validator==2.2.0
+
+# --- Auth / Security ---
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+python-jose[cryptography]==3.5.0
+python-multipart==0.0.12
+pyotp==2.9.0
+
+# --- Redis / Background Tasks ---
+redis==5.1.1
+arq==0.26.1
+
+# --- AWS / Storage ---
+boto3==1.35.36
+
+# --- HTTP Client ---
+httpx==0.27.2
+
+# --- Observability ---
+structlog==24.4.0
+sentry-sdk[fastapi]==2.14.0
+prometheus-client==0.21.0
+
+# --- Rate Limiting ---
+slowapi==0.1.9
+
+# --- Image Processing ---
+pillow==10.4.0
+
+# --- PDF Generation ---
+weasyprint==62.3

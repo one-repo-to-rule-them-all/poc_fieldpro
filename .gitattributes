@@ -1,0 +1,13 @@
+# Force LF line endings for all text files (project runs in Linux containers)
+* text=auto eol=lf
+
+# Explicitly binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary
+*.tgz binary

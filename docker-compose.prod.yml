@@ -1,0 +1,132 @@
+# ============================================================
+# FieldPro — Production Overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# What this adds/overrides vs base:
+#   - restart: always on all services
+#   - Multi-process gunicorn for backend
+#   - Memory + CPU resource limits
+#   - Structured JSON logging with rotation
+#   - pgAdmin excluded (no profiles match)
+#   - Worker gets its own resource allocation
+# ============================================================
+
+services:
+
+  postgres:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  redis:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  backend:
+    build:
+      target: production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "1.0"
+        reservations:
+          memory: 256m
+    # Gunicorn + uvicorn workers for production:
+    #   - Gunicorn manages N worker processes
+    #   - Each worker is an async uvicorn worker
+    #   - $WEB_CONCURRENCY defaults to (2 * CPU + 1), set explicitly for predictability
+    command: >
+      sh -c "alembic upgrade head &&
+             gunicorn app.main:app
+               --workers ${WEB_CONCURRENCY:-4}
+               --worker-class uvicorn.workers.UvicornWorker
+               --bind 0.0.0.0:8000
+               --timeout 120
+               --keepalive 5
+               --max-requests 1000
+               --max-requests-jitter 100
+               --access-logfile -
+               --error-logfile -
+               --log-level warning"
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      LOG_LEVEL: warning
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "10"
+
+  worker:
+    build:
+      target: production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+        reservations:
+          memory: 128m
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      LOG_LEVEL: warning
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  frontend:
+    build:
+      target: production
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.5"
+    environment:
+      NODE_ENV: production
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  nginx:
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 64m
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # pgAdmin never starts in production — profile name deliberately
+  # excluded from any compose --profile flag used in prod deploys.
+  pgadmin:
+    profiles:
+      - dev-tools-never-in-prod

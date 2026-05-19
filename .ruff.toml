@@ -1,0 +1,65 @@
+line-length = 100
+target-version = "py312"
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pycache__",
+    "migrations/versions",
+    "dist",
+    "build",
+]
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "S",    # flake8-bandit (security)
+    "B",    # flake8-bugbear
+    "A",    # flake8-builtins
+    "COM",  # flake8-commas
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez (timezone-aware datetimes)
+    "T10",  # flake8-debugger
+    "PIE",  # flake8-pie
+    "SIM",  # flake8-simplify
+    "RUF",  # Ruff-specific rules
+]
+ignore = [
+    "S101",   # allow assert statements
+    "S105",   # allow hardcoded passwords in tests
+    "COM812", # trailing comma — conflicts with formatter
+    # FastAPI / Pydantic idiomatic-pattern conflicts (industry standard to disable)
+    "B008",   # FastAPI uses Depends() in function defaults — that's the documented pattern
+    "A002",   # Path/Query params like `id: UUID` shadow builtins; renaming would break the API contract
+    "N804",   # Pydantic validators have custom first-arg names; can't always be "cls"
+]
+
+[lint.per-file-ignores]
+"tests/**" = ["S101", "S106", "DTZ", "S311"]
+"scripts/**" = ["S101", "T20"]
+"migrations/**" = ["N999", "E501"]
+# Model files use SQLAlchemy 2.0 string-based forward refs (e.g.
+# Mapped["User | None"]) in Mapped[] annotations to avoid circular
+# imports. Ruff's F821 can't see those as defined names. Disabling
+# F821 here is the standard pattern; relationship targets are still
+# validated by SQLAlchemy at registry-configuration time.
+"**/app/models/**" = ["F821"]
+
+[lint.isort]
+known-first-party = ["app"]
+force-sort-within-sections = true
+split-on-trailing-comma = true
+
+[lint.pep8-naming]
+classmethod-decorators = ["classmethod", "validator", "root_validator", "field_validator", "model_validator"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

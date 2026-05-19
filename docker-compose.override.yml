@@ -1,0 +1,106 @@
+# ============================================================
+# FieldPro — Local Development Overrides
+# Merged automatically by `docker compose up` — no flags needed.
+# Adds: hot-reload, source mounts, MailHog, relaxed healthchecks.
+# ============================================================
+
+networks:
+  fieldpro:
+    driver: bridge
+
+volumes:
+  backend_venv:
+  frontend_node_modules:
+  frontend_next_cache:
+
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development   # Uses dev stage (includes dev deps)
+    volumes:
+      - ./backend:/app:cached           # Live source mount for hot-reload
+      - backend_venv:/app/.venv         # Persist venv across rebuilds
+      - ./scripts:/app/scripts:ro       # Seed scripts accessible inside container
+    command: >
+      sh -c "pip install -r requirements-dev.txt --quiet &&
+             alembic upgrade head &&
+             uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 --log-level debug"
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      LOG_LEVEL: debug
+      ALLOWED_HOSTS: "*"
+      # Point email to MailHog
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+    # Looser healthcheck in dev — faster iteration
+    healthcheck:
+      interval: 15s
+      retries: 5
+      start_period: 20s
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - ./backend:/app:cached
+      - backend_venv:/app/.venv
+    command: >
+      sh -c "pip install -r requirements-dev.txt --quiet &&
+             python -m app.workers.main"
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      LOG_LEVEL: debug
+      # Worker sends real emails (password reset, invoice send, etc.) —
+      # point SMTP at MailHog in dev. Mirrors the backend service block above.
+      SMTP_HOST: mailhog
+      SMTP_PORT: "1025"
+      SMTP_TLS: "false"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    volumes:
+      - ./frontend/src:/app/src:cached          # Hot-reload source
+      - ./frontend/public:/app/public:cached
+      - frontend_node_modules:/app/node_modules  # Persist across rebuilds
+      - frontend_next_cache:/app/.next
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_ENVIRONMENT: development
+      # Force polling for file changes inside Docker on macOS/Windows
+      WATCHPACK_POLLING: "true"
+      CHOKIDAR_USEPOLLING: "true"
+
+  # Disable nginx in dev — hit backend:8000 and frontend:3000 directly
+  nginx:
+    profiles:
+      - nginx-dev   # Opt-in only: docker compose --profile nginx-dev up
+
+  # MailHog — local SMTP server + web UI
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: fieldpro_mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"   # SMTP — backend sends here in dev
+      - "8025:8025"   # Web UI — view sent emails at http://localhost:8025
+    networks:
+      - fieldpro
+    logging:
+      driver: none    # Suppress mailhog logs from compose output
