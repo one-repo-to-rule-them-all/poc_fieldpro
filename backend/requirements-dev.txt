@@ -10,7 +10,7 @@ factory-boy==3.3.1
 faker==30.3.0
 
 # Linting / type checking
-ruff==0.6.9
+ruff==0.15.13
 mypy==1.11.2
 
 # Type stubs for libraries used by app/services/work_order_service.py (rrulestr)
