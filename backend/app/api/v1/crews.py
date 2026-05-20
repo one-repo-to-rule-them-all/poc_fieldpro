@@ -100,7 +100,7 @@ async def _get_crew_or_404(
 # GET / — list crews
 # --------------------------------------------------------------------------- #
 
-@router.get("/", response_model=PaginatedResponse[CrewListResponse])
+@router.get("", response_model=PaginatedResponse[CrewListResponse])
 async def list_crews(
     tenant_id: CurrentTenantId,
     current_user: CurrentUser,
@@ -189,7 +189,7 @@ async def list_crews(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=CrewDetailResponse,
     dependencies=[Depends(require_permission("crews", "write"))],
