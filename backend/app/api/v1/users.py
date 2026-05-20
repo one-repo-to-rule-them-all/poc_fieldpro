@@ -103,7 +103,7 @@ async def get_me(
 # --------------------------------------------------------------------------- #
 
 @router.get(
-    "/",
+    "",
     dependencies=[Depends(require_permission("users", "read"))],
 )
 async def list_users(
@@ -171,7 +171,7 @@ async def list_users(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role("tenant_admin", "platform_owner"))],
 )

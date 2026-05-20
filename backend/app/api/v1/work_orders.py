@@ -82,7 +82,7 @@ async def _resolve_related_names(
 # GET / — list with filters
 # --------------------------------------------------------------------------- #
 
-@router.get("/", response_model=PaginatedResponse[WorkOrderListItem])
+@router.get("", response_model=PaginatedResponse[WorkOrderListItem])
 async def list_work_orders(
     tenant_id: CurrentTenantId,
     current_user: CurrentUser,
@@ -199,7 +199,7 @@ async def list_work_orders(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     response_model=WorkOrderResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_permission("work_orders", "write"))],

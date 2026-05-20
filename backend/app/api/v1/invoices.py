@@ -129,7 +129,7 @@ async def _get_invoice_or_404(
 # --------------------------------------------------------------------------- #
 
 @router.get(
-    "/",
+    "",
     response_model=PaginatedResponse[InvoiceListResponse],
     dependencies=[Depends(require_permission("invoices", "read"))],
 )
@@ -208,7 +208,7 @@ async def list_invoices(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=InvoiceDetailResponse,
     dependencies=[Depends(require_permission("invoices", "write"))],

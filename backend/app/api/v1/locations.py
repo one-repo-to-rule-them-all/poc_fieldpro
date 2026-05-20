@@ -96,7 +96,7 @@ async def _assert_client_exists(
 # GET / — list locations
 # --------------------------------------------------------------------------- #
 
-@router.get("/", response_model=PaginatedResponse[LocationListResponse])
+@router.get("", response_model=PaginatedResponse[LocationListResponse])
 async def list_locations(
     tenant_id: CurrentTenantId,
     current_user: CurrentUser,
@@ -150,7 +150,7 @@ async def list_locations(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=LocationDetailResponse,
     dependencies=[Depends(require_permission("locations", "write"))],

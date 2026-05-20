@@ -78,7 +78,7 @@ def _audit_row_to_detail_dict(row: AuditLog, actor: User | None) -> dict:
 
 
 @router.get(
-    "/",
+    "",
     response_model=PaginatedResponse[AuditLogListResponse],
     summary="List audit log events",
     description=(

@@ -86,7 +86,7 @@ def _client_to_dict(client: Client, location_count: int | None = None) -> dict:
 # GET / — list clients
 # --------------------------------------------------------------------------- #
 
-@router.get("/", response_model=PaginatedResponse[ClientListResponse])
+@router.get("", response_model=PaginatedResponse[ClientListResponse])
 async def list_clients(
     tenant_id: CurrentTenantId,
     current_user: CurrentUser,
@@ -140,7 +140,7 @@ async def list_clients(
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/",
+    "",
     status_code=status.HTTP_201_CREATED,
     response_model=ClientDetailResponse,
     dependencies=[Depends(require_permission("clients", "write"))],
