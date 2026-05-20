@@ -21,9 +21,8 @@ services:
       dockerfile: Dockerfile
       target: development   # Uses dev stage (includes dev deps)
     volumes:
-      - ./backend:/app:cached           # Live source mount for hot-reload
+      - ./backend:/app:cached           # Live source mount for hot-reload (includes backend/scripts/)
       - backend_venv:/app/.venv         # Persist venv across rebuilds
-      - ./scripts:/app/scripts:ro       # Seed scripts accessible inside container
     command: >
       sh -c "pip install -r requirements-dev.txt --quiet &&
              alembic upgrade head &&
