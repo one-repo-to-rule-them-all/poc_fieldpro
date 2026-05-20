@@ -109,8 +109,8 @@ async def get_dashboard(
         FROM work_orders
         WHERE tenant_id = :tenant_id
           AND deleted_at IS NULL
-          AND (:dt_from IS NULL OR scheduled_date >= :dt_from)
-          AND (:dt_to   IS NULL OR scheduled_date <= :dt_to)
+          AND (CAST(:dt_from AS timestamptz) IS NULL OR scheduled_date >= CAST(:dt_from AS timestamptz))
+          AND (CAST(:dt_to   AS timestamptz) IS NULL OR scheduled_date <= CAST(:dt_to AS timestamptz))
     """)
 
     wo_row = (
