@@ -105,7 +105,7 @@ jobs:
         run: cd backend && pytest tests/ --cov=app --cov-report=xml --cov-fail-under=55
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: backend/coverage.xml
           flags: backend
@@ -152,7 +152,7 @@ jobs:
         run: cd frontend && npm run test:coverage
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: frontend/coverage/lcov.info
           flags: frontend
