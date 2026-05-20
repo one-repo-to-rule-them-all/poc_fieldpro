@@ -58,32 +58,49 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-50">
-      {/* Sidebar */}
-      <Sidebar />
+    <div className="flex h-screen flex-col overflow-hidden bg-neutral-50">
+      <DemoBanner />
 
-      {/* Main content */}
-      <div
-        className={cn(
-          "flex flex-1 flex-col overflow-hidden transition-all duration-300",
-          // On desktop, account for sidebar width
-          "lg:ml-0"
-        )}
-      >
-        <Navbar />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
 
-        <main
+        <div
           className={cn(
-            "flex-1 overflow-y-auto",
-            // Add bottom padding on mobile for the tab bar
-            "pb-16 lg:pb-0"
+            "flex flex-1 flex-col overflow-hidden transition-all duration-300",
+            "lg:ml-0"
           )}
         >
-          {children}
-        </main>
+          <Navbar />
+
+          <main
+            className={cn(
+              "flex-1 overflow-y-auto",
+              "pb-16 lg:pb-0"
+            )}
+          >
+            {children}
+          </main>
+        </div>
       </div>
 
       <GlobalModals />
+    </div>
+  );
+}
+
+function DemoBanner() {
+  return (
+    <div className="bg-amber-500 px-4 py-1.5 text-center text-xs font-medium text-white">
+      <span className="hidden sm:inline">🟡 </span>
+      Demo instance — data resets nightly. Not for real business use.{" "}
+      <a
+        href="https://github.com/one-repo-to-rule-them-all/poc_fieldpro"
+        target="_blank"
+        rel="noreferrer noopener"
+        className="underline underline-offset-2 hover:text-amber-50"
+      >
+        View source
+      </a>
     </div>
   );
 }
