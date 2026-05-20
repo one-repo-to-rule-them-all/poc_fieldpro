@@ -193,6 +193,8 @@ docker compose run --rm frontend npm run type-check
 
 Reference Fly.io configuration is included for both services (`fly.toml` for backend, `fly.frontend.toml` for frontend). Update `image = "ghcr.io/YOUR_GITHUB_ORG/..."` to point at your own container registry before deploying.
 
+For a full step-by-step plan to deploy this as a public demo (~1 working day, ~$1/month), see [`docs/planning/deployment-plan-a-showcase-demo.md`](docs/planning/deployment-plan-a-showcase-demo.md). For the production-first-customer playbook (6–10 weeks), see [`docs/planning/deployment-plan-b-production-onboarding.md`](docs/planning/deployment-plan-b-production-onboarding.md).
+
 ---
 
 ## What's Intentionally Not Included
@@ -209,6 +211,12 @@ This snapshot is **strictly the MVP Phase 1 closed loop.** The following are def
 - Self-serve tenant signup + subscription tiers
 - Mobile native apps, offline sync
 - Route optimization, AI scheduling, QuickBooks/Xero integration
+
+---
+
+## Roadmap
+
+Current focus and what's queued live in [`docs/planning/roadmap.md`](docs/planning/roadmap.md). The two detailed deployment plans (showcase demo and production onboarding) live alongside it in `docs/planning/`.
 
 ---
 
