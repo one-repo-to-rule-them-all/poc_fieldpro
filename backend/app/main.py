@@ -228,8 +228,9 @@ from app.api.v1.router import api_router  # noqa: E402
 app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get(
+@app.api_route(
     "/health",
+    methods=["GET", "HEAD"],
     tags=["ops"],
     summary="Health check",
     response_model=dict[str, Any],
