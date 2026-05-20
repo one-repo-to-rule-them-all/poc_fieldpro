@@ -1,10 +1,9 @@
-# FieldPro Backend — Production
+# FieldPro Backend — Public POC Demo
 # Fly.io app configuration
-app = "fieldpro-backend"
+#
+# Built from backend/Dockerfile on every deploy (no GHCR pre-built image).
+app = "fieldpro-poc-backend"
 primary_region = "dfw"
-
-[build]
-  image = "ghcr.io/YOUR_GITHUB_ORG/fieldpro/backend:latest"
 
 [env]
   PORT = "8000"

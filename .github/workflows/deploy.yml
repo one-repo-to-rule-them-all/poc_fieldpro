@@ -1,182 +1,75 @@
 name: Deploy
 
+# Deploy the public POC demo to Fly.io on every push to main.
+# Fly builds both images from their Dockerfiles — no GHCR pre-build step.
+#
+# Required GitHub secret: FLY_API_TOKEN
+#   Create with: flyctl tokens create deploy --app fieldpro-poc-backend
+#                (and the same for fieldpro-poc, or use one org-wide token)
+#
+# Required repo variable (or hard-code): BACKEND_URL
+#   The frontend bakes this into the JS bundle. Defaults to fieldpro-poc-backend.fly.dev.
+
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  build-and-push:
-    name: Build & Push Docker Images
+  deploy:
+    name: Deploy to Fly.io
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    outputs:
-      image_tag: ${{ github.sha }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v4
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push backend image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          target: production
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/backend:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/backend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-      - name: Build and push frontend image
-        uses: docker/build-push-action@v7
-        with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
-          target: production
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/frontend:${{ github.sha }}
-            ghcr.io/${{ github.repository }}/frontend:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          labels: |
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.sha }}
-
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    environment:
-      name: staging
-      url: https://staging.fieldpro.app
+    timeout-minutes: 25
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      BACKEND_URL: ${{ vars.BACKEND_URL || 'https://fieldpro-poc-backend.fly.dev' }}
     steps:
       - uses: actions/checkout@v6
 
       - name: Set up flyctl
         uses: superfly/flyctl-actions/setup-flyctl@master
 
-      - name: Deploy backend to staging
-        run: |
-          flyctl deploy \
-            --config fly.staging.toml \
-            --image ghcr.io/${{ github.repository }}/backend:${{ github.sha }} \
-            --strategy rolling \
-            --wait-timeout 300
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
-
-      - name: Deploy frontend to staging
-        run: |
-          flyctl deploy \
-            --config fly.frontend.staging.toml \
-            --image ghcr.io/${{ github.repository }}/frontend:${{ github.sha }} \
-            --strategy rolling \
-            --wait-timeout 300
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
-
-      - name: Run database migrations on staging
-        run: |
-          flyctl ssh console \
-            --app fieldpro-backend-staging \
-            -C "alembic upgrade head"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
-
-      - name: Smoke test staging
-        run: |
-          sleep 10
-          curl --fail --retry 5 --retry-delay 5 \
-            https://api.staging.fieldpro.app/health
-          echo "Staging smoke test passed"
-
-      - name: Rollback staging on failure
-        if: failure()
-        run: |
-          echo "Staging deployment failed — rolling back"
-          flyctl releases list --app fieldpro-backend-staging --json | \
-            python3 -c "import json,sys; r=json.load(sys.stdin); print(r[1]['Version'] if len(r)>1 else 'no-prior')" | \
-            xargs -I{} flyctl releases rollback {} --app fieldpro-backend-staging || true
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_STAGING }}
-
-  # ── Production deployment requires approval in the GitHub "production" environment.
-  # ── Configure required reviewers in Settings → Environments → production.
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: deploy-staging
-    environment:
-      name: production
-      url: https://fieldpro.app
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy backend to production
+      - name: Deploy backend
         run: |
           flyctl deploy \
             --config fly.toml \
-            --image ghcr.io/${{ github.repository }}/backend:${{ github.sha }} \
+            --app fieldpro-poc-backend \
             --strategy rolling \
-            --wait-timeout 300
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
+            --wait-timeout 600
 
-      - name: Deploy frontend to production
+      - name: Run database migrations
+        run: |
+          flyctl ssh console \
+            --app fieldpro-poc-backend \
+            -C "alembic upgrade head"
+
+      - name: Deploy frontend
         run: |
           flyctl deploy \
             --config fly.frontend.toml \
-            --image ghcr.io/${{ github.repository }}/frontend:${{ github.sha }} \
+            --app fieldpro-poc \
+            --build-arg "NEXT_PUBLIC_API_URL=${BACKEND_URL}" \
             --strategy rolling \
-            --wait-timeout 300
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
+            --wait-timeout 600
 
-      - name: Run database migrations on production
+      - name: Smoke test
         run: |
-          flyctl ssh console \
-            --app fieldpro-backend \
-            -C "alembic upgrade head"
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_PRODUCTION }}
-
-      - name: Smoke test production
-        run: |
-          sleep 15
+          sleep 10
           curl --fail --retry 5 --retry-delay 5 \
-            https://api.fieldpro.app/health
-          echo "Production smoke test passed"
+            "${BACKEND_URL}/health"
+          echo "Demo smoke test passed."
 
-      - name: Write deployment summary
-        if: success()
+      - name: Deployment summary
+        if: always()
         run: |
-          echo "## ✅ Production Deployment Successful" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Time:** $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
-
-      - name: Notify deployment failure
-        if: failure()
-        run: |
-          echo "Production deployment FAILED for commit ${{ github.sha }}"
-          echo "Manual rollback may be required"
-          exit 1
+          {
+            echo "## Demo deployment — ${{ job.status }}"
+            echo "- **Commit:** \`${{ github.sha }}\`"
+            echo "- **Backend:** ${BACKEND_URL}"
+            echo "- **Frontend:** https://fieldpro-poc.fly.dev"
+            echo "- **Actor:** ${{ github.actor }}"
+          } >> "$GITHUB_STEP_SUMMARY"

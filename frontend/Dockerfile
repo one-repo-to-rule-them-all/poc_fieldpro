@@ -29,6 +29,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# NEXT_PUBLIC_* values are baked into the JS bundle at build time, so the
+# API URL has to be available here — pass it via `--build-arg NEXT_PUBLIC_API_URL=...`.
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 

@@ -17,6 +17,16 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
+const DEMO_LOGINS: ReadonlyArray<{
+  label: string;
+  email: string;
+  password: string;
+}> = [
+  { label: "Admin", email: "admin@demo.fieldpro.app", password: "Admin123!" },
+  { label: "Manager", email: "manager@demo.fieldpro.app", password: "Manager123!" },
+  { label: "Field worker", email: "carlos@demo.fieldpro.app", password: "Employee123!" },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((s) => s.login);
@@ -41,6 +51,19 @@ export default function LoginPage() {
       const message =
         (err as { message?: string })?.message ??
         "Invalid email or password. Please try again.";
+      setServerError(message);
+    }
+  };
+
+  const quickLogin = async (email: string, password: string) => {
+    setServerError(null);
+    try {
+      await login(email, password);
+      router.push("/dashboard");
+    } catch (err: unknown) {
+      const message =
+        (err as { message?: string })?.message ??
+        "Demo login failed. The demo may be resetting — try again in a moment.";
       setServerError(message);
     }
   };
@@ -202,16 +225,41 @@ export default function LoginPage() {
                 )}
               </button>
             </form>
+
+            <div className="mt-6 border-t border-neutral-200 pt-5">
+              <p className="mb-3 text-center text-xs font-medium uppercase tracking-wider text-neutral-500">
+                Or try the demo
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                {DEMO_LOGINS.map((d) => (
+                  <button
+                    key={d.email}
+                    type="button"
+                    onClick={() => quickLogin(d.email, d.password)}
+                    disabled={isSubmitting}
+                    className="rounded-lg border border-neutral-200 bg-white px-2 py-2 text-xs font-medium text-neutral-700 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 disabled:opacity-50"
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-3 text-center text-[11px] text-neutral-400">
+                Public demo · data resets nightly
+              </p>
+            </div>
           </div>
 
           <p className="mt-5 text-center text-sm text-neutral-500">
-            Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
+            Sign-up is disabled in the public demo. To run your own instance,{" "}
+            <a
+              href="https://github.com/one-repo-to-rule-them-all/poc_fieldpro"
+              target="_blank"
+              rel="noreferrer noopener"
               className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
             >
-              Start free trial
-            </Link>
+              view the source
+            </a>
+            .
           </p>
         </div>
       </div>

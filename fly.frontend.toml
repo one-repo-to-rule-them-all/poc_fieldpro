@@ -1,16 +1,19 @@
-# FieldPro Frontend — Production
-app = "fieldpro-frontend"
+# FieldPro Frontend — Public POC Demo
+#
+# NEXT_PUBLIC_API_URL is baked into the Next.js bundle at build time, so it
+# must be passed as a --build-arg on every deploy, not set here as a runtime env:
+#
+#   flyctl deploy -c fly.frontend.toml \
+#     --build-arg NEXT_PUBLIC_API_URL=https://fieldpro-poc-backend.fly.dev \
+#     --app fieldpro-poc
+app = "fieldpro-poc"
 primary_region = "dfw"
-
-[build]
-  image = "ghcr.io/YOUR_GITHUB_ORG/fieldpro/frontend:latest"
 
 [env]
   PORT = "3000"
   NODE_ENV = "production"
   NEXT_TELEMETRY_DISABLED = "1"
-  NEXT_PUBLIC_API_URL = "https://api.fieldpro.app"
-  NEXT_PUBLIC_APP_NAME = "FieldPro"
+  NEXT_PUBLIC_APP_NAME = "FieldPro Demo"
 
 [http_service]
   internal_port = 3000
