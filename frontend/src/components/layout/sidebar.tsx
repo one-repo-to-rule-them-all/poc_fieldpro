@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -24,7 +25,7 @@ import { useSidebar } from "@/stores/ui-store";
 
 interface NavItem {
   label: string;
-  href: string;
+  href: Route;
   icon: React.ElementType;
   roles?: string[];
   testid: string;
@@ -242,7 +243,7 @@ export function Sidebar() {
 
       {/* Mobile bottom tab bar */}
       <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-neutral-200 bg-white lg:hidden">
-        {[
+        {([
           { label: "Orders", href: "/dashboard/work-orders", icon: ClipboardList },
           { label: "Schedule", href: "/dashboard/schedule", icon: Calendar },
           { label: "Crews", href: "/dashboard/crews", icon: HardHat },
@@ -253,7 +254,7 @@ export function Sidebar() {
             adminOnly: true,
           },
           { label: "More", href: "/dashboard/settings", icon: Settings },
-        ]
+        ] as { label: string; href: Route; icon: React.ElementType; adminOnly?: boolean }[])
           .filter((item) => {
             if (!("adminOnly" in item) || !item.adminOnly) return true;
             return hasRole("manager");

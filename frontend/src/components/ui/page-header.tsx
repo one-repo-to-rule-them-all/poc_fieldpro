@@ -1,10 +1,11 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface Breadcrumb {
   label: string;
-  href?: string;
+  href?: Route;
 }
 
 interface PageHeaderProps {
