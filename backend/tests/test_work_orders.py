@@ -88,7 +88,7 @@ async def _create_work_order_via_api(
     """POST /api/v1/work-orders and return the parsed JSON body."""
     tomorrow = (datetime.now(UTC) + timedelta(days=1)).isoformat()
     response = await client_http.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {token}"},
         json={
             "title": title,
@@ -109,14 +109,14 @@ async def _create_work_order_via_api(
 @pytest.mark.asyncio
 async def test_create_work_order_requires_auth(client: AsyncClient) -> None:
     """POST /work-orders without a token must return 401."""
-    response = await client.post("/api/v1/work-orders/", json={})
+    response = await client.post("/api/v1/work-orders", json={})
     assert response.status_code == 401
 
 
 @pytest.mark.asyncio
 async def test_list_work_orders_requires_auth(client: AsyncClient) -> None:
     """GET /work-orders without a token must return 401."""
-    response = await client.get("/api/v1/work-orders/")
+    response = await client.get("/api/v1/work-orders")
     assert response.status_code == 401
 
 
@@ -473,7 +473,7 @@ async def test_list_work_orders_tenant_scoped(
         assert resp.status_code == 201
 
     list_resp = await client.get(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert list_resp.status_code == 200
@@ -503,7 +503,7 @@ async def test_create_recurring_work_order(
     tomorrow = (datetime.now(UTC) + timedelta(days=1)).isoformat()
 
     resp = await client.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "title": "Weekly Park Cleaning",
@@ -538,7 +538,7 @@ async def test_invalid_recurrence_rule_rejected(
     tomorrow = (datetime.now(UTC) + timedelta(days=1)).isoformat()
 
     resp = await client.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "title": "Bad Rule WO",
@@ -570,7 +570,7 @@ async def test_generate_instances_endpoint(
     # Create a recurring parent starting today
     now = datetime.now(UTC)
     resp = await client.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "title": "Recurring Parent",
@@ -616,7 +616,7 @@ async def test_complete_recurring_spawns_next(
 
     # Create recurring WO
     resp = await client.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "title": "Auto-Spawn Test",
@@ -651,7 +651,7 @@ async def test_complete_recurring_spawns_next(
 
     # Verify a child WO was spawned
     list_resp = await client.get(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         params={"page_size": 50},
     )
@@ -683,7 +683,7 @@ async def test_generate_instances_copies_tasks(
 
     # Create recurring WO with tasks
     resp = await client.post(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={
             "title": "Task Copy Test",

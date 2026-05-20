@@ -46,7 +46,7 @@ def _auth(token: str) -> dict:
 
 @pytest.mark.asyncio
 async def test_list_clients_requires_auth(client: AsyncClient) -> None:
-    response = await client.get("/api/v1/clients/")
+    response = await client.get("/api/v1/clients")
     assert response.status_code == 401
 
 
@@ -70,7 +70,7 @@ async def test_list_clients_returns_paginated_shape(
     await _seed_client(db, tenant, name="Alpha")
     await _seed_client(db, tenant, name="Beta")
 
-    resp = await client.get("/api/v1/clients/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/clients", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     body = resp.json()
@@ -94,7 +94,7 @@ async def test_list_clients_item_fields(
 ) -> None:
     seeded = await _seed_client(db, tenant, name="Field Check Corp")
 
-    resp = await client.get("/api/v1/clients/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/clients", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     items = resp.json()["items"]
@@ -116,7 +116,7 @@ async def test_list_clients_search_filter(
     await _seed_client(db, tenant, name="Other Corp")
 
     resp = await client.get(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         params={"search": "Searchable"},
         headers=_auth(admin_token),
     )
@@ -139,7 +139,7 @@ async def test_create_client_success(
 ) -> None:
     code = f"CLI-{uuid.uuid4().hex[:6].upper()}"
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={"name": "New Client", "code": code},
         headers=_auth(admin_token),
     )
@@ -163,7 +163,7 @@ async def test_create_client_duplicate_code_returns_409(
     seeded = await _seed_client(db, tenant)
 
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={"name": "Another Corp", "code": seeded.code},
         headers=_auth(admin_token),
     )
@@ -177,7 +177,7 @@ async def test_create_client_invalid_industry_returns_422(
 ) -> None:
     """Invalid industry enum value → clean 422 (not a 500 with a ValueError trace)."""
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={"name": "Bad Industry Co", "code": "BAD-IND", "industry": "Healthcare"},
         headers=_auth(admin_token),
     )
@@ -196,7 +196,7 @@ async def test_create_client_employee_forbidden(
     tenant: Tenant,
 ) -> None:
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         json={"name": "Blocked", "code": "BLK-001"},
         headers=_auth(employee_token),
     )

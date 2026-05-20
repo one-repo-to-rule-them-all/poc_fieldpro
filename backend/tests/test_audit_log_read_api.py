@@ -36,7 +36,7 @@ async def _seed_client_via_api(
 ) -> str:
     """Create a client through the API (so audit row gets written) and return its id."""
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         headers={"Authorization": f"Bearer {token}"},
         json={"name": name, "code": code},
     )
@@ -58,7 +58,7 @@ async def test_list_returns_rows_for_admin(
     await _seed_client_via_api(client, admin_token)
 
     resp = await client.get(
-        "/api/v1/audit-logs/",
+        "/api/v1/audit-logs",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200, resp.text
@@ -200,7 +200,7 @@ async def test_employee_gets_403_on_list(
 ) -> None:
     """employee role → 403 on GET /audit-logs/."""
     resp = await client.get(
-        "/api/v1/audit-logs/",
+        "/api/v1/audit-logs",
         headers={"Authorization": f"Bearer {employee_token}"},
     )
     assert resp.status_code == 403
@@ -209,7 +209,7 @@ async def test_employee_gets_403_on_list(
 @pytest.mark.asyncio
 async def test_unauthenticated_gets_401(client: AsyncClient) -> None:
     """No token → 401."""
-    resp = await client.get("/api/v1/audit-logs/")
+    resp = await client.get("/api/v1/audit-logs")
     assert resp.status_code == 401
 
 
