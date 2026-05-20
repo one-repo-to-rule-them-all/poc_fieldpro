@@ -218,6 +218,12 @@ This snapshot is **strictly the MVP Phase 1 closed loop.** The following are def
 
 Current focus and what's queued live in [`docs/planning/roadmap.md`](docs/planning/roadmap.md). The two detailed deployment plans (showcase demo and production onboarding) live alongside it in `docs/planning/`.
 
+For lessons learned from the Plan A deploy — every hiccup, root cause, and what to do differently next time — see [`docs/planning/plan-a-retrospective.md`](docs/planning/plan-a-retrospective.md).
+
+## Operations
+
+The deployed demo at `fieldpro-poc.fly.dev` has a documented smoke-test runbook at [`docs/runbooks/smoke-test.md`](docs/runbooks/smoke-test.md). The Python equivalent (no dependencies beyond stdlib) lives at [`scripts/smoke_test.py`](scripts/smoke_test.py) — run it with `python scripts/smoke_test.py` and it'll exercise auth, list/detail endpoints, write paths, and RBAC end-to-end.
+
 ---
 
 ## License
