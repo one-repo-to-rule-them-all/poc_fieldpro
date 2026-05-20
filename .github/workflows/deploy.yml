@@ -34,9 +34,9 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy backend
+        working-directory: backend
         run: |
           flyctl deploy \
-            --config fly.toml \
             --app fieldpro-poc-backend \
             --strategy rolling \
             --wait-timeout 600
@@ -48,9 +48,9 @@ jobs:
             -C "alembic upgrade head"
 
       - name: Deploy frontend
+        working-directory: frontend
         run: |
           flyctl deploy \
-            --config fly.frontend.toml \
             --app fieldpro-poc \
             --build-arg "NEXT_PUBLIC_API_URL=${BACKEND_URL}" \
             --strategy rolling \
