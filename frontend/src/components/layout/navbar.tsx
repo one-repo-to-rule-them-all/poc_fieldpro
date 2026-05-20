@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
 import {
   Bell,
@@ -77,7 +78,7 @@ export function Navbar() {
                   <span className="font-semibold text-neutral-900">{crumb.label}</span>
                 ) : (
                   <Link
-                    href={crumb.href}
+                    href={crumb.href as Route}
                     className="text-neutral-400 hover:text-neutral-600 transition-colors"
                   >
                     {crumb.label}

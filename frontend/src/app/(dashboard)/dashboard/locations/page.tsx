@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, MapPin, QrCode } from "lucide-react";
 import { locationsApi } from "@/lib/api";
@@ -14,7 +13,6 @@ import { cn } from "@/lib/utils";
 import type { Location } from "@/types";
 
 export default function LocationsPage() {
-  const router = useRouter();
   const [search, setSearch] = useState("");
   const [clientFilter, setClientFilter] = useState<string>("");
   const [page, setPage] = useState(1);
@@ -116,16 +114,13 @@ export default function LocationsPage() {
     {
       key: "actions",
       header: "",
-      accessor: (row) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push(`/locations/${row.id}`);
-          }}
-          className="text-xs font-medium text-primary-600 hover:text-primary-700"
+      accessor: () => (
+        <span
+          className="cursor-not-allowed text-xs font-medium text-neutral-400"
+          title="Disabled in the public demo"
         >
           Edit
-        </button>
+        </span>
       ),
       className: "text-right",
     },
@@ -142,8 +137,10 @@ export default function LocationsPage() {
         ]}
         actions={
           <button
-            onClick={() => router.push("/locations/new")}
-            className="btn-primary"
+            type="button"
+            disabled
+            title="Disabled in the public demo"
+            className="btn-primary cursor-not-allowed opacity-60"
           >
             <Plus className="h-4 w-4" />
             Add Location

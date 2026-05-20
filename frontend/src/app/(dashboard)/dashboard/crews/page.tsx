@@ -160,7 +160,7 @@ export default function CrewsPage() {
                 key={crew.id}
                 crew={crew}
                 onClick={() =>
-                  router.push(`/dashboard/crews/${crew.id}` as any)
+                  router.push(`/dashboard/crews/${crew.id}`)
                 }
               />
             ))}
