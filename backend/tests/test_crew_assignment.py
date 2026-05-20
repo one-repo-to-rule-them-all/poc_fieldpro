@@ -142,7 +142,7 @@ async def test_work_order_list_includes_crew_name(
     crew = await _seed_crew(db, tenant, name="Lawn Squad")
     await _seed_work_order(db, tenant, cli, loc, crew=crew)
 
-    resp = await client.get("/api/v1/work-orders/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/work-orders", headers=_auth(admin_token))
     assert resp.status_code == 200, resp.text
 
     items = resp.json()["items"]
@@ -160,7 +160,7 @@ async def test_work_order_list_crew_name_null_when_unassigned(
     loc = await _seed_location(db, tenant, cli)
     await _seed_work_order(db, tenant, cli, loc, crew=None)
 
-    resp = await client.get("/api/v1/work-orders/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/work-orders", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     item = resp.json()["items"][0]
@@ -205,7 +205,7 @@ async def test_work_order_list_filters_by_crew_id(
     await _seed_work_order(db, tenant, cli, loc, title="WO-None", crew=None)
 
     resp = await client.get(
-        "/api/v1/work-orders/",
+        "/api/v1/work-orders",
         params={"crew_id": str(crew_a.id)},
         headers=_auth(admin_token),
     )

@@ -23,16 +23,20 @@ const clientSchema = z.object({
 
 type ClientFormValues = z.infer<typeof clientSchema>;
 
-const INDUSTRIES = [
-  "Commercial Real Estate",
-  "Healthcare",
-  "Education",
-  "Retail",
-  "Manufacturing",
-  "Hospitality",
-  "Government",
-  "Technology",
-  "Other",
+// Values must match the backend's Industry enum in backend/app/models/client.py.
+// Labels are the human-readable form shown in the dropdown.
+const INDUSTRIES: ReadonlyArray<{ value: string; label: string }> = [
+  { value: "commercial_cleaning", label: "Commercial Cleaning" },
+  { value: "janitorial", label: "Janitorial" },
+  { value: "landscaping", label: "Landscaping" },
+  { value: "hvac", label: "HVAC" },
+  { value: "plumbing", label: "Plumbing" },
+  { value: "electrical", label: "Electrical" },
+  { value: "security", label: "Security" },
+  { value: "pest_control", label: "Pest Control" },
+  { value: "facility_management", label: "Facility Management" },
+  { value: "construction", label: "Construction" },
+  { value: "other", label: "Other" },
 ];
 
 export default function ClientsPage() {
@@ -292,8 +296,8 @@ export default function ClientsPage() {
                     >
                       <option value="">Select industry…</option>
                       {INDUSTRIES.map((i) => (
-                        <option key={i} value={i}>
-                          {i}
+                        <option key={i.value} value={i.value}>
+                          {i.label}
                         </option>
                       ))}
                     </select>

@@ -45,7 +45,7 @@ def _auth(token: str) -> dict:
 
 @pytest.mark.asyncio
 async def test_list_crews_requires_auth(client: AsyncClient) -> None:
-    resp = await client.get("/api/v1/crews/")
+    resp = await client.get("/api/v1/crews")
     assert resp.status_code == 401
 
 
@@ -69,7 +69,7 @@ async def test_list_crews_returns_paginated_shape(
     await _seed_crew(db, tenant, name="Night Shift")
     await _seed_crew(db, tenant, name="Day Shift")
 
-    resp = await client.get("/api/v1/crews/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/crews", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     body = resp.json()
@@ -93,7 +93,7 @@ async def test_list_crews_item_fields(
 ) -> None:
     seeded = await _seed_crew(db, tenant, name="Field Crew")
 
-    resp = await client.get("/api/v1/crews/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/crews", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     items = resp.json()["items"]
@@ -115,7 +115,7 @@ async def test_list_crews_search_filter(
     await _seed_crew(db, tenant, name="Maintenance")
 
     resp = await client.get(
-        "/api/v1/crews/",
+        "/api/v1/crews",
         params={"search": "Special"},
         headers=_auth(admin_token),
     )
@@ -138,7 +138,7 @@ async def test_create_crew_success(
 ) -> None:
     code = f"CRW-{uuid.uuid4().hex[:6].upper()}"
     resp = await client.post(
-        "/api/v1/crews/",
+        "/api/v1/crews",
         json={"name": "New Crew", "code": code},
         headers=_auth(admin_token),
     )
@@ -162,7 +162,7 @@ async def test_create_crew_duplicate_code_returns_409(
     seeded = await _seed_crew(db, tenant)
 
     resp = await client.post(
-        "/api/v1/crews/",
+        "/api/v1/crews",
         json={"name": "Another Crew", "code": seeded.code},
         headers=_auth(admin_token),
     )
@@ -175,7 +175,7 @@ async def test_create_crew_employee_forbidden(
     employee_token: str,
 ) -> None:
     resp = await client.post(
-        "/api/v1/crews/",
+        "/api/v1/crews",
         json={"name": "Blocked", "code": "BLK-001"},
         headers=_auth(employee_token),
     )

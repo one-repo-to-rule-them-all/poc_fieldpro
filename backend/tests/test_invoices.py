@@ -47,7 +47,7 @@ async def _create_invoice_via_api(
     due_date: str | None = None,
 ) -> Response:  # type: ignore[name-defined]
     return await client.post(
-        "/api/v1/invoices/",
+        "/api/v1/invoices",
         json={"client_id": str(client_id), "due_date": due_date or _due_date_str()},
         headers={"Authorization": f"Bearer {token}"},
     )
@@ -63,7 +63,7 @@ def _auth(token: str) -> dict:
 
 @pytest.mark.asyncio
 async def test_list_invoices_requires_auth(client: AsyncClient) -> None:
-    resp = await client.get("/api/v1/invoices/")
+    resp = await client.get("/api/v1/invoices")
     assert resp.status_code == 401
 
 
@@ -104,7 +104,7 @@ async def test_list_invoices_returns_paginated_shape(
     await _create_invoice_via_api(client, admin_token, svc_client.id)
     await _create_invoice_via_api(client, admin_token, svc_client.id)
 
-    resp = await client.get("/api/v1/invoices/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/invoices", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     body = resp.json()
@@ -128,7 +128,7 @@ async def test_list_invoices_item_fields(
     assert create_resp.status_code == 201
     invoice_id = create_resp.json()["id"]
 
-    resp = await client.get("/api/v1/invoices/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/invoices", headers=_auth(admin_token))
     items = resp.json()["items"]
     item = next((i for i in items if i["id"] == invoice_id), None)
     assert item is not None
@@ -152,7 +152,7 @@ async def test_list_invoices_filter_by_status(
     assert create_resp.status_code == 201
 
     resp = await client.get(
-        "/api/v1/invoices/",
+        "/api/v1/invoices",
         params={"status": "draft"},
         headers=_auth(admin_token),
     )
@@ -213,7 +213,7 @@ async def test_create_invoice_with_line_items_returns_201(
     """
     svc_client = await _seed_client(db, tenant)
     resp = await client.post(
-        "/api/v1/invoices/",
+        "/api/v1/invoices",
         json={
             "client_id": str(svc_client.id),
             "due_date": _due_date_str(),

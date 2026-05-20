@@ -52,7 +52,7 @@ async def test_client_create_writes_audit_row(
 ) -> None:
     """POST /clients → action='created' with full new_values snapshot."""
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"name": "Test Client", "code": "TC-1"},
     )
@@ -75,7 +75,7 @@ async def test_client_update_single_field_diff(
 ) -> None:
     """PATCH /clients/:id → action='updated' with only the changed field in old/new_values."""
     create = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"name": "Original Name", "code": "TC-2"},
     )
@@ -107,7 +107,7 @@ async def test_client_soft_delete_emits_deleted_action(
 ) -> None:
     """DELETE /clients/:id (soft-delete) emits action='deleted', not 'updated'."""
     create = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         headers={"Authorization": f"Bearer {admin_token}"},
         json={"name": "Soft Delete Test", "code": "SD-1"},
     )

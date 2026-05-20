@@ -36,7 +36,7 @@ async def _seed_client_via_api(
 ) -> str:
     """Create a client through the API (so audit row gets written) and return its id."""
     resp = await client.post(
-        "/api/v1/clients/",
+        "/api/v1/clients",
         headers={"Authorization": f"Bearer {token}"},
         json={"name": name, "code": code},
     )
@@ -58,7 +58,7 @@ async def test_list_returns_rows_for_admin(
     await _seed_client_via_api(client, admin_token)
 
     resp = await client.get(
-        "/api/v1/audit-logs/",
+        "/api/v1/audit-logs",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200, resp.text
@@ -79,7 +79,7 @@ async def test_list_paginated_shape(
         await _seed_client_via_api(client, admin_token, name=f"Page{i}", code=f"PAGE-{i}")
 
     resp = await client.get(
-        "/api/v1/audit-logs/?page=1&page_size=2",
+        "/api/v1/audit-logs?page=1&page_size=2",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
@@ -97,7 +97,7 @@ async def test_list_rejects_page_size_over_cap(
 ) -> None:
     """page_size > 100 → 422 validation error."""
     resp = await client.get(
-        "/api/v1/audit-logs/?page_size=500",
+        "/api/v1/audit-logs?page_size=500",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 422
@@ -116,7 +116,7 @@ async def test_filter_by_action(
     await _seed_client_via_api(client, admin_token, code="FILT-A")
 
     resp = await client.get(
-        "/api/v1/audit-logs/?action=created&page_size=50",
+        "/api/v1/audit-logs?action=created&page_size=50",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
@@ -134,7 +134,7 @@ async def test_filter_by_resource_type(
     await _seed_client_via_api(client, admin_token, code="FILT-RT")
 
     resp = await client.get(
-        "/api/v1/audit-logs/?resource_type=Client&page_size=50",
+        "/api/v1/audit-logs?resource_type=Client&page_size=50",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
@@ -152,7 +152,7 @@ async def test_filter_by_user_id(
     await _seed_client_via_api(client, admin_token, code="FILT-UID")
 
     resp = await client.get(
-        f"/api/v1/audit-logs/?user_id={admin_user.id}&page_size=50",
+        f"/api/v1/audit-logs?user_id={admin_user.id}&page_size=50",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
@@ -180,7 +180,7 @@ async def test_filter_by_request_id(
     assert row.request_id is not None
 
     resp = await client.get(
-        f"/api/v1/audit-logs/?request_id={row.request_id}",
+        f"/api/v1/audit-logs?request_id={row.request_id}",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert resp.status_code == 200
@@ -200,7 +200,7 @@ async def test_employee_gets_403_on_list(
 ) -> None:
     """employee role → 403 on GET /audit-logs/."""
     resp = await client.get(
-        "/api/v1/audit-logs/",
+        "/api/v1/audit-logs",
         headers={"Authorization": f"Bearer {employee_token}"},
     )
     assert resp.status_code == 403
@@ -209,7 +209,7 @@ async def test_employee_gets_403_on_list(
 @pytest.mark.asyncio
 async def test_unauthenticated_gets_401(client: AsyncClient) -> None:
     """No token → 401."""
-    resp = await client.get("/api/v1/audit-logs/")
+    resp = await client.get("/api/v1/audit-logs")
     assert resp.status_code == 401
 
 
@@ -226,7 +226,7 @@ async def test_actor_email_resolves_from_join(
     await _seed_client_via_api(client, admin_token, code="ACTOR")
 
     resp = await client.get(
-        "/api/v1/audit-logs/?action=created&page_size=10",
+        "/api/v1/audit-logs?action=created&page_size=10",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     body = resp.json()
@@ -251,7 +251,7 @@ async def test_detail_returns_full_diff(
 
     # Pull the audit_log id for the just-created row
     list_resp = await client.get(
-        "/api/v1/audit-logs/?resource_type=Client&page_size=50",
+        "/api/v1/audit-logs?resource_type=Client&page_size=50",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     audit_row = next(
@@ -330,7 +330,7 @@ async def test_admin_sees_only_own_tenant(
 
     # List as admin (own tenant only)
     resp = await client.get(
-        "/api/v1/audit-logs/?page_size=100",
+        "/api/v1/audit-logs?page_size=100",
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     body = resp.json()
@@ -428,7 +428,7 @@ async def test_platform_owner_sees_all_tenants(
     await db.commit()
 
     resp = await client.get(
-        "/api/v1/audit-logs/?page_size=100",
+        "/api/v1/audit-logs?page_size=100",
         headers={"Authorization": f"Bearer {po_token}"},
     )
     body = resp.json()

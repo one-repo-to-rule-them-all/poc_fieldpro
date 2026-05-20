@@ -62,7 +62,7 @@ def _auth(token: str) -> dict:
 
 @pytest.mark.asyncio
 async def test_list_locations_requires_auth(client: AsyncClient) -> None:
-    resp = await client.get("/api/v1/locations/")
+    resp = await client.get("/api/v1/locations")
     assert resp.status_code == 401
 
 
@@ -87,7 +87,7 @@ async def test_list_locations_returns_paginated_shape(
     await _seed_location(db, tenant, svc_client, name="Site Alpha")
     await _seed_location(db, tenant, svc_client, name="Site Beta")
 
-    resp = await client.get("/api/v1/locations/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/locations", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     body = resp.json()
@@ -112,7 +112,7 @@ async def test_list_locations_item_fields(
     svc_client = await _seed_client(db, tenant)
     seeded = await _seed_location(db, tenant, svc_client, name="Field Check Site")
 
-    resp = await client.get("/api/v1/locations/", headers=_auth(admin_token))
+    resp = await client.get("/api/v1/locations", headers=_auth(admin_token))
     assert resp.status_code == 200
 
     items = resp.json()["items"]
@@ -136,7 +136,7 @@ async def test_list_locations_filter_by_client(
     await _seed_location(db, tenant, client_b, name="B's Site")
 
     resp = await client.get(
-        "/api/v1/locations/",
+        "/api/v1/locations",
         params={"client_id": str(client_a.id)},
         headers=_auth(admin_token),
     )
@@ -160,7 +160,7 @@ async def test_create_location_success(
     svc_client = await _seed_client(db, tenant)
 
     resp = await client.post(
-        "/api/v1/locations/",
+        "/api/v1/locations",
         json={"name": "New Site", "client_id": str(svc_client.id)},
         headers=_auth(admin_token),
     )
@@ -181,7 +181,7 @@ async def test_create_location_invalid_client_returns_404(
     tenant: Tenant,
 ) -> None:
     resp = await client.post(
-        "/api/v1/locations/",
+        "/api/v1/locations",
         json={"name": "Orphan Site", "client_id": str(uuid.uuid4())},
         headers=_auth(admin_token),
     )
@@ -197,7 +197,7 @@ async def test_create_location_employee_forbidden(
 ) -> None:
     svc_client = await _seed_client(db, tenant)
     resp = await client.post(
-        "/api/v1/locations/",
+        "/api/v1/locations",
         json={"name": "Blocked", "client_id": str(svc_client.id)},
         headers=_auth(employee_token),
     )
