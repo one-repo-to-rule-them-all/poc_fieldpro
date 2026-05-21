@@ -314,13 +314,15 @@ Navigate to https://fieldpro-poc.fly.dev/register. Verify:
 
 ## 8. When you suspect a real outage
 
-1. **First check Fly status:** `flyctl status --app fieldpro-poc-backend` and `flyctl status --app fieldpro-poc-db` — anything `stopped` is the lead suspect.
-2. **Then logs:** `flyctl logs --app fieldpro-poc-backend` (Ctrl+C after ~10 lines of output).
-3. **Then restart, in this order:**
+1. **Sentry first.** If the demo is throwing 5xx errors, check the Sentry dashboard before doing anything else — the exception will be there with the full traceback. Usually faster than tailing logs.
+2. **UptimeRobot dashboard** — confirms whether `/health` and `/login` are actually unreachable, or whether it's just one user's request that bombed.
+3. **Fly status:** `flyctl status --app fieldpro-poc-backend` and `flyctl status --app fieldpro-poc-db` — anything `stopped` is the lead suspect.
+4. **Fly logs:** `flyctl logs --app fieldpro-poc-backend` (Ctrl+C after ~10 lines).
+5. **Restart, in this order:**
    1. Postgres: `flyctl machine start --app fieldpro-poc-db`
    2. Backend: `flyctl machine restart <id> --app fieldpro-poc-backend`
    3. Frontend: `flyctl machine restart <id> --app fieldpro-poc`
-4. **If still broken:** check the Fly status page at https://status.flyctl.io.
+6. **If still broken:** check the Fly status page at https://status.flyctl.io.
 
 ---
 
