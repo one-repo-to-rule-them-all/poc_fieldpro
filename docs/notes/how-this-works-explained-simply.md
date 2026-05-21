@@ -132,7 +132,7 @@ Wrote a script that wipes the demo data and re-creates it from scratch. Schedule
 
 **Result:** the demo resets itself every night at 3am. People can mess around all day; by morning it's pristine again.
 
-### Step 7 — Add alarms (Phase 7, where we are now)
+### Step 7 — Add alarms (Phase 7) ✅
 
 Two pieces:
 
@@ -142,15 +142,28 @@ Two pieces:
 
 2. **UptimeRobot** — signed up, added two monitors: one for the backend's health endpoint, one for the frontend's login page. Both get poked every 5 minutes.
 
-**Result:** if anything breaks, we know within minutes (or seconds, for crashes).
+   Small hiccup we hit: UptimeRobot's free tier sends "HEAD" requests instead of "GET" (HEAD is cheaper — it's like asking "is this page there?" without actually downloading it). FastAPI was set up to only accept GET on `/health`, so UptimeRobot got back a "405 Method Not Allowed" and reported the demo as **Down** even though it was fine. Fix: one-line change in the backend to also accept HEAD on `/health`.
 
-### Step 8 — Set up automatic deploys (Phase 8, not done yet)
+**Result:** if anything breaks, we know within minutes (or seconds, for crashes). Sentry tells us *what* broke; UptimeRobot tells us *that* something broke (in case the whole server goes down and Sentry can't phone home).
 
-Right now, when we want to update the demo, we have to manually run `flyctl deploy` from a terminal. The plan for step 8 is to wire it up so that when we merge a change into the main code on GitHub, the demo automatically redeploys with no manual work.
+### Step 8 — Set up automatic deploys (Phase 8) ✅
 
-The setup is simple: give GitHub a "token" (kind of like a password) that lets it talk to Fly on our behalf. The deploy script already exists; it just needs that token to work.
+Before this step, every time we wanted to update the demo, someone had to manually run `flyctl deploy` from a terminal. Annoying and error-prone.
 
-### Step 9 — Final once-over (Phase 9, not done yet)
+For step 8, we wired it up so that **when a change merges into the main code on GitHub, GitHub Actions automatically redeploys the demo** with no manual work.
+
+The setup:
+1. Generated a "Fly API token" — like a temporary password that lets GitHub talk to Fly on our behalf.
+2. Saved that token in GitHub as a secret called `FLY_API_TOKEN`.
+3. The deploy workflow was already written (it shipped in an earlier PR) — it just needed the token to start working.
+
+Hiccup: the *first* auto-deploy hung for 12 minutes on the same "sticky spinner" we'd seen running deploys manually. The deploy was actually finishing in under a minute, but `flyctl deploy` was waiting for Fly's health-checker to flip from "checking" to "passing", and the checker stays stuck sometimes. After 12 minutes, the workflow gave up and marked the deploy as a failure — even though the new code was live the whole time.
+
+Fix: we changed the workflow to (a) only wait 2 minutes for the spinner before giving up, and (b) trust the **smoke test** as the source of truth. The smoke test hits `/health` and the `/login` page directly with `curl` after the deploy; if those return 200, we successfully deployed regardless of what the spinner said.
+
+**Result:** merge to main → ~5-8 minutes later → new version is live on the demo URLs with smoke tests confirming health. (The spinner usually still times out at 2 min, but that's now just yellow noise — the smoke test is what determines pass/fail.)
+
+### Step 9 — Final once-over (Phase 9, last step)
 
 Run the [smoke test runbook](../runbooks/smoke-test.md) end-to-end one last time, confirm everything's solid, declare Plan A done.
 
@@ -179,6 +192,13 @@ This is a "the reset works correctly, but causes a brief glitch" kind of bug. We
 
 ### Eight PRs to deploy a demo
 The original plan said "one working day, simple deploy." It actually took 8 separate fix-and-redeploy cycles to land. Every cycle taught us something. None of the bugs were "OMG how could we miss that" bugs — they were the kind of bugs that only show up when you actually try to run the thing in production. Hence the full retrospective doc.
+
+### The CI/CD pipeline that broke itself in the same exact way
+After all the manual deploys hit the "sticky spinner" hang and we documented it as a known thing to wait out, we wired up GitHub Actions to auto-deploy on every merge to main. **The very first auto-deploy hung for 12 minutes** — same bug, same root cause. Of course. We'd built the auto-deploy assuming Fly would behave nicely; it doesn't.
+
+Quick fix: change the workflow to only wait 2 minutes for flyctl, and trust the curl-based smoke test as the actual source of truth for "did this deploy work." Now: merge → ~5-8 min → live and verified. The first deploy on the new workflow ran end-to-end in 7m 41s — yes, it had two yellow timeouts in the flyctl steps, but the smoke test passed and the workflow turned green. Working as intended.
+
+Lesson: **don't trust the deploy tool's own opinion of whether a deploy succeeded.** Hit the actual endpoint with curl and see if it returns 200. That's the truth.
 
 ---
 
