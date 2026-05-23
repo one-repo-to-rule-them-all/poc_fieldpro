@@ -164,6 +164,7 @@ export default function WorkOrderDetailPage() {
           notifications.add({
             type: "success",
             title: "Work order completed",
+            message: "Marked as completed.",
           });
         },
         onError: (err: unknown) => {
