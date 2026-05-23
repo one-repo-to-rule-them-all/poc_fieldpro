@@ -23,6 +23,7 @@ import {
   useUpdateWorkOrder,
 } from "@/hooks/use-work-orders";
 import { useCrews } from "@/hooks/use-crews";
+import { useNotifications } from "@/stores/ui-store";
 import { Modal } from "@/components/ui/modal";
 import { WorkOrderForm } from "@/components/work-orders/work-order-form";
 import { TaskList } from "@/components/work-orders/task-list";
@@ -150,9 +151,38 @@ export default function WorkOrderDetailPage() {
 
   const { data: workOrder, isLoading } = useWorkOrder(id);
   const completeWorkOrder = useCompleteWorkOrder(id);
+  const notifications = useNotifications();
 
   const [activeTab, setActiveTab] = useState<"tasks" | "checkins" | "attachments">("tasks");
   const [showEditModal, setShowEditModal] = useState(false);
+
+  const handleMarkComplete = () => {
+    completeWorkOrder.mutate(
+      {},
+      {
+        onSuccess: () => {
+          notifications.add({
+            type: "success",
+            title: "Work order completed",
+            message: "Marked as completed.",
+          });
+        },
+        onError: (err: unknown) => {
+          const detail = (
+            err as { response?: { data?: { detail?: string } } }
+          )?.response?.data?.detail;
+          notifications.add({
+            type: "error",
+            title: "Could not mark complete",
+            message:
+              typeof detail === "string"
+                ? detail
+                : "Please try again or contact support.",
+          });
+        },
+      }
+    );
+  };
 
   if (isLoading) {
     return (
@@ -206,7 +236,7 @@ export default function WorkOrderDetailPage() {
             </button>
             {workOrder.status !== "completed" && workOrder.status !== "cancelled" && (
               <button
-                onClick={() => completeWorkOrder.mutate({})}
+                onClick={handleMarkComplete}
                 disabled={completeWorkOrder.isPending}
                 data-testid="wo-complete-button"
                 className="btn-primary text-sm disabled:opacity-50"
