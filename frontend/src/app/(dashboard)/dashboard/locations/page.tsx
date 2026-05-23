@@ -36,14 +36,15 @@ export default function LocationsPage() {
     placeholderData: (prev) => prev,
   });
 
-  // Client-side search filter (API doesn't expose a search param for locations)
+  // Client-side search filter (API doesn't expose a search param for locations).
+  // Address fields can be null, so each access is guarded before .toLowerCase().
   const filteredItems = (data?.items ?? []).filter((loc) => {
     if (!debouncedSearch) return true;
     const q = debouncedSearch.toLowerCase();
     return (
-      loc.name.toLowerCase().includes(q) ||
-      loc.address.street.toLowerCase().includes(q) ||
-      loc.address.city.toLowerCase().includes(q)
+      loc.name?.toLowerCase().includes(q) ||
+      loc.address?.street?.toLowerCase().includes(q) ||
+      loc.address?.city?.toLowerCase().includes(q)
     );
   });
 
