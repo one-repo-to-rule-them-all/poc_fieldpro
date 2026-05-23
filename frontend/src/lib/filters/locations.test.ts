@@ -9,7 +9,7 @@ function loc(overrides: Partial<Location> & { name?: string }): Location {
     client_id: "c-1",
     name: overrides.name ?? "Main Lobby",
     address: {
-      street: "123 Main St",
+      street: "123 Elm St",
       city: "Austin",
       state: "TX",
       zip: "78701",
