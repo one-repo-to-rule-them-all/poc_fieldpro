@@ -168,15 +168,13 @@ export default function WorkOrderDetailPage() {
           });
         },
         onError: (err: unknown) => {
-          const detail = (
-            err as { response?: { data?: { detail?: string } } }
-          )?.response?.data?.detail;
+          const message = (err as { message?: string })?.message;
           notifications.add({
             type: "error",
             title: "Could not mark complete",
             message:
-              typeof detail === "string"
-                ? detail
+              typeof message === "string" && message.length > 0
+                ? message
                 : "Please try again or contact support.",
           });
         },
