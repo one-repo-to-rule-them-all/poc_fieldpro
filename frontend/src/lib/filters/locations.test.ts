@@ -13,6 +13,7 @@ function loc(overrides: Partial<Location> & { name?: string }): Location {
       city: "Austin",
       state: "TX",
       zip: "78701",
+      country: "US",
       ...(overrides.address ?? {}),
     },
     is_active: true,
@@ -34,9 +35,9 @@ describe("filterLocations", () => {
 
   it("matches on street and city", () => {
     const items = [
-      loc({ name: "X", address: { street: "Common Blvd", city: "Austin", state: "TX", zip: "" } }),
-      loc({ name: "Y", address: { street: "Other Rd", city: "Common City", state: "TX", zip: "" } }),
-      loc({ name: "Z", address: { street: "Elm", city: "Dallas", state: "TX", zip: "" } }),
+      loc({ name: "X", address: { street: "Common Blvd", city: "Austin", state: "TX", zip: "", country: "US" } }),
+      loc({ name: "Y", address: { street: "Other Rd", city: "Common City", state: "TX", zip: "", country: "US" } }),
+      loc({ name: "Z", address: { street: "Elm", city: "Dallas", state: "TX", zip: "", country: "US" } }),
     ];
     expect(filterLocations(items, "common")).toHaveLength(2);
   });
@@ -47,7 +48,7 @@ describe("filterLocations", () => {
     const items = [
       loc({
         name: "Bayfront",
-        address: { street: null as unknown as string, city: "Corpus Christi", state: "TX", zip: "78401" },
+        address: { street: null as unknown as string, city: "Corpus Christi", state: "TX", zip: "78401", country: "US" },
       }),
     ];
     expect(() => filterLocations(items, "common")).not.toThrow();
