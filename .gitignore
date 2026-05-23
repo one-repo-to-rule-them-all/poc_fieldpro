@@ -160,3 +160,6 @@ static/uploads/
 .parcel-cache/
 *.tgz
 *.tar.gz
+
+# --- QA tracker artifacts ---
+docs/qa/.issue-urls.txt
