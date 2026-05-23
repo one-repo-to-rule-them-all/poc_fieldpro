@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, Plus, MapPin, QrCode } from "lucide-react";
 import { locationsApi } from "@/lib/api";
+import { filterLocations } from "@/lib/filters/locations";
 import { STALE_TIME } from "@/lib/query-config";
 import { useClients } from "@/hooks/use-clients";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -36,17 +37,8 @@ export default function LocationsPage() {
     placeholderData: (prev) => prev,
   });
 
-  // Client-side search filter (API doesn't expose a search param for locations).
-  // Address fields can be null, so each access is guarded before .toLowerCase().
-  const filteredItems = (data?.items ?? []).filter((loc) => {
-    if (!debouncedSearch) return true;
-    const q = debouncedSearch.toLowerCase();
-    return (
-      loc.name?.toLowerCase().includes(q) ||
-      loc.address?.street?.toLowerCase().includes(q) ||
-      loc.address?.city?.toLowerCase().includes(q)
-    );
-  });
+  // Client-side filter (the locations API has no search param).
+  const filteredItems = filterLocations(data?.items ?? [], debouncedSearch);
 
   const columns: Column<Location>[] = [
     {
