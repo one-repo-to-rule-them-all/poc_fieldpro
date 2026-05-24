@@ -8,14 +8,64 @@ const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 // These tests pin the contract that the axios response interceptor in api.ts
 // normalizes errors into a flat shape:
 //   { message: string, status: number, code?: string, details?: ... }
-// where `message` carries the FastAPI `detail` field. Consumers (e.g. the
-// Mark Complete toast on the work order detail page) depend on reading
-// `err.message`, NOT `err.response.data.detail` — the latter is gone by the
-// time the promise rejects. See #37 / #65.
+//
+// The backend (backend/app/main.py) wraps every error in:
+//   { error: { code, message, details?, request_id } }
+// so `apiError.message` is sourced from `data.error.message`. The legacy
+// FastAPI shape (`{ detail }`) is kept as a fallback for tests or any
+// non-wrapped endpoint.
 
 describe("workOrdersApi.completeWorkOrder — error normalization", () => {
-  it("surfaces a 422 detail on err.message and preserves status", async () => {
-    const detail = "Cannot complete: 2 required task(s) not done: 'Restock TP', 'Empty trash'";
+  it("surfaces error.message from the wrapped backend envelope", async () => {
+    const message = "Cannot complete: 1 required task(s) not done: 'fa'";
+    server.use(
+      http.post(`${API}/api/v1/work-orders/:id/complete`, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "UNPROCESSABLE_ENTITY",
+              message,
+              request_id: "req-123",
+            },
+          },
+          { status: 422 }
+        )
+      )
+    );
+
+    await expect(workOrdersApi.completeWorkOrder("wo-1")).rejects.toMatchObject({
+      message,
+      status: 422,
+      code: "UNPROCESSABLE_ENTITY",
+    });
+  });
+
+  it("preserves validation details from the wrapped envelope", async () => {
+    server.use(
+      http.post(`${API}/api/v1/work-orders/:id/complete`, () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: "VALIDATION_ERROR",
+              message: "Request validation failed.",
+              details: { title: ["field required"] },
+              request_id: "req-456",
+            },
+          },
+          { status: 422 }
+        )
+      )
+    );
+
+    await expect(workOrdersApi.completeWorkOrder("wo-1")).rejects.toMatchObject({
+      status: 422,
+      code: "VALIDATION_ERROR",
+      details: { title: ["field required"] },
+    });
+  });
+
+  it("falls back to the legacy {detail} shape when error wrapper is absent", async () => {
+    const detail = "Legacy unwrapped FastAPI error";
     server.use(
       http.post(`${API}/api/v1/work-orders/:id/complete`, () =>
         HttpResponse.json({ detail }, { status: 422 })
@@ -28,21 +78,18 @@ describe("workOrdersApi.completeWorkOrder — error normalization", () => {
     });
   });
 
-  it("falls back to a useful message when the backend omits detail", async () => {
+  it("falls back to a useful message when the backend omits both shapes", async () => {
     server.use(
       http.post(`${API}/api/v1/work-orders/:id/complete`, () =>
         HttpResponse.json({}, { status: 500 })
       )
     );
 
-    await expect(workOrdersApi.completeWorkOrder("wo-1")).rejects.toMatchObject({
-      status: 500,
-    });
-    // .message is the fallback string from the interceptor — non-empty and stable.
     await expect(workOrdersApi.completeWorkOrder("wo-1")).rejects.toSatisfy(
       (err: unknown) =>
         typeof (err as { message?: string }).message === "string" &&
-        ((err as { message: string }).message.length > 0)
+        (err as { message: string }).message.length > 0 &&
+        (err as { status?: number }).status === 500
     );
   });
 });

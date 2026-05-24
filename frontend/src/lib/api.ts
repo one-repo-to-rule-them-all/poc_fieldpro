@@ -136,16 +136,33 @@ api.interceptors.response.use(
       }
     }
 
-    // Normalize error
+    // Normalize error. The backend wraps every response in
+    //   { error: { code, message, details?, request_id } }
+    // (see backend/app/main.py exception handlers). Fall back to the legacy
+    // unwrapped FastAPI shape ({ detail }) so unit tests and any non-wrapped
+    // endpoint still surface a useful message.
+    const payload = error.response?.data as
+      | {
+          error?: {
+            code?: string;
+            message?: string;
+            details?: Record<string, string[]>;
+          };
+          detail?: string;
+          code?: string;
+          details?: Record<string, string[]>;
+        }
+      | undefined;
+
     const apiError: ApiError = {
       message:
-        (error.response?.data as { detail?: string })?.detail ??
+        payload?.error?.message ??
+        payload?.detail ??
         error.message ??
         "An unexpected error occurred",
       status: error.response?.status ?? 0,
-      code: (error.response?.data as { code?: string })?.code,
-      details: (error.response?.data as { details?: Record<string, string[]> })
-        ?.details,
+      code: payload?.error?.code ?? payload?.code,
+      details: payload?.error?.details ?? payload?.details,
     };
 
     return Promise.reject(apiError);
