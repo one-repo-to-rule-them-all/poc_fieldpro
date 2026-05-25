@@ -3,18 +3,18 @@
 # ============================================================
 
 # --- Core Framework ---
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
+fastapi==0.136.3
+uvicorn[standard]==0.48.0
 
 # --- Database ---
-sqlalchemy==2.0.35
-alembic==1.13.3
+sqlalchemy==2.0.50
+alembic==1.18.4
 asyncpg==0.31.0
 
 # --- Pydantic / Settings ---
-pydantic==2.9.2
-pydantic[email]==2.9.2
-pydantic-settings==2.5.2
+pydantic==2.13.4
+pydantic[email]==2.13.4
+pydantic-settings==2.14.1
 email-validator==2.2.0
 
 # --- Auth / Security ---
